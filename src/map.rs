@@ -6,6 +6,7 @@
 //! [`BTreeMap`]: https://doc.rust-lang.org/std/collections/struct.BTreeMap.html
 //! [`IndexMap`]: https://docs.rs/indexmap/*/indexmap/map/struct.IndexMap.html
 
+use ahash::RandomState;
 use crate::lib::iter::FromIterator;
 use crate::lib::*;
 use crate::value::Value;
@@ -23,14 +24,15 @@ pub struct Map<K, V> {
 #[cfg(not(feature = "preserve_order"))]
 type MapImpl<K, V> = BTreeMap<K, V>;
 #[cfg(feature = "preserve_order")]
-type MapImpl<K, V> = IndexMap<K, V>;
+type MapImpl<K, V> = IndexMap<K, V, RandomState>;
 
 impl Map<ByteString, Value> {
     /// Makes a new empty Map.
     #[inline]
     pub fn new() -> Self {
+        ahash::AHasher::default();
         Map {
-            map: MapImpl::new(),
+            map: MapImpl::default(),
         }
     }
 
@@ -45,7 +47,7 @@ impl Map<ByteString, Value> {
                 BTreeMap::new()
             },
             #[cfg(feature = "preserve_order")]
-            map: IndexMap::with_capacity(capacity),
+            map: IndexMap::with_capacity_and_hasher(capacity, ahash::RandomState::new()),
         }
     }
 
@@ -286,7 +288,7 @@ impl Default for Map<ByteString, Value> {
     #[inline]
     fn default() -> Self {
         Map {
-            map: MapImpl::new(),
+            map: MapImpl::default(),
         }
     }
 }
